@@ -1,6 +1,8 @@
 # Rusty - Chatbot powered by Rust and Ollama
 
-This repository contains a Rust application that interacts with the Ollama API to create a chat-like interface using the Mistral-Nemo language model.
+This repository contains a Rust application that interacts with the Ollama API to create a chat-like interface using any model available to Ollama.
+
+To change the model, you have to update the `main.rs` file.
 
 ## Features
 
