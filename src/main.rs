@@ -1,19 +1,14 @@
-use ollama_rs::{
-    generation::completion::{
-        request::GenerationRequest, GenerationContext,
-    },
-    Ollama,
-};
+use ollama_rs::Ollama;
 use tokio::io::{stdout, AsyncWriteExt};
-use tokio_stream::StreamExt;
+
+mod lib;
+use lib::generate_response;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ollama = Ollama::default();
-
     let mut stdout = stdout();
-
-    let mut context: Option<GenerationContext> = None;
+    let mut context = None;
 
     loop {
         stdout.write_all(b"\n> ").await?;
@@ -27,22 +22,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             break;
         }
 
-        let mut request = GenerationRequest::new("mistral-nemo:latest".into(), input.to_string());
-        if let Some(context) = context.clone() {
-            request = request.context(context);
-        }
-        let mut stream = ollama.generate_stream(request).await?;
+        let (response, new_context) = generate_response(&ollama, input, context).await?;
+        stdout.write_all(response.as_bytes()).await?;
+        stdout.flush().await?;
 
-        while let Some(Ok(res)) = stream.next().await {
-            for ele in res {
-                stdout.write_all(ele.response.as_bytes()).await?;
-                stdout.flush().await?;
-
-                if ele.context.is_some() {
-                    context = ele.context;
-                }
-            }
-        }
+        context = new_context;
     }
 
     Ok(())
