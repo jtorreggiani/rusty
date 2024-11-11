@@ -1,14 +1,14 @@
 use ollama_rs::Ollama;
 use tokio::io::{stdout, AsyncWriteExt};
 
-mod lib;
-use lib::generate_response;
+use rusty::{generate_response, tools::time_tool::TimeTool};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ollama = Ollama::default();
     let mut stdout = stdout();
     let mut context = None;
+    let time_tool = TimeTool;
 
     loop {
         stdout.write_all(b"\n> ").await?;
@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             break;
         }
 
-        let (response, new_context) = generate_response(&ollama, input, context).await?;
+        let (response, new_context) = generate_response(&ollama, input, context, &time_tool).await?;
         stdout.write_all(response.as_bytes()).await?;
         stdout.flush().await?;
 

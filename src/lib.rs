@@ -6,15 +6,26 @@ use ollama_rs::{
 };
 use tokio_stream::StreamExt;
 
+pub mod tools;
+pub use tools::Tool;
+
 pub async fn generate_response(
     ollama: &Ollama,
     input: &str,
     context: Option<GenerationContext>,
+    time_tool: &impl Tool,
 ) -> Result<(String, Option<GenerationContext>), Box<dyn std::error::Error>> {
     let mut request = GenerationRequest::new("mistral-nemo:latest".into(), input.to_string());
     if let Some(context) = context.clone() {
         request = request.context(context);
     }
+    
+    // Check if the input is asking for the current time
+    if input.to_lowercase().contains("time") {
+        let time_response = time_tool.call("").await?;
+        return Ok((time_response, context));
+    }
+    
     let mut stream = ollama.generate_stream(request).await?;
 
     let mut response = String::new();
